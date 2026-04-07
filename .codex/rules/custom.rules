@@ -117,6 +117,20 @@ prefix_rule(
 )
 
 prefix_rule(
+    pattern = ["git", "check-ignore", "-v"],
+    decision = "allow",
+    justification = "Allow verifying ignore rules for repository paths without prompting.",
+    match = [
+        "git check-ignore -v .worktrees",
+        "git check-ignore -v .env.local",
+    ],
+    not_match = [
+        "git rev-parse --show-toplevel",
+        "git status --short",
+    ],
+)
+
+prefix_rule(
     pattern = ["git", "rebase", ["main", "origin/main", "develop", "origin/develop", "master", "origin/master"]],
     decision = "allow",
     justification = "Allow rebasing the current branch onto a common integration branch without prompting.",
@@ -653,6 +667,46 @@ prefix_rule(
     ],
     not_match = [
         "gh pr create --draft",
+    ],
+)
+
+prefix_rule(
+    pattern = ["pwd"],
+    decision = "allow",
+    justification = "Allow printing the current working directory without prompting.",
+    match = [
+        "pwd",
+    ],
+    not_match = [
+        "git status",
+        "ls",
+    ],
+)
+
+prefix_rule(
+    pattern = ["mkdir", "-p", ".worktrees"],
+    decision = "allow",
+    justification = "Allow creating the repository-scoped .worktrees directory without prompting.",
+    match = [
+        "mkdir -p .worktrees",
+    ],
+    not_match = [
+        "mkdir -p tmp",
+        "rm -rf .worktrees",
+    ],
+)
+
+prefix_rule(
+    pattern = ["sh", ".codex/skills/using-git-worktrees/scripts/worktree-add.sh"],
+    decision = "allow",
+    justification = "Allow running the repository's worktree setup helper from the repository root without prompting.",
+    match = [
+        "sh .codex/skills/using-git-worktrees/scripts/worktree-add.sh --base main feature/example-task",
+        "sh .codex/skills/using-git-worktrees/scripts/worktree-add.sh feature/example-task",
+    ],
+    not_match = [
+        "sh .codex/skills/code-change-verification/scripts/run.sh",
+        "bash .codex/skills/using-git-worktrees/scripts/worktree-add.sh --base main feature/example-task",
     ],
 )
 
