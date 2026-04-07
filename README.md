@@ -1,5 +1,7 @@
 # Development Template
 
+Adapted in part from [`obra/superpowers`](https://github.com/obra/superpowers).
+
 ## Tooling
 
 - `pnpm run lint`: run `oxlint`
@@ -16,3 +18,7 @@
 - `Vitest` is configured for unit tests in `tests/unit`.
 - `Playwright` is configured for end-to-end tests in `tests/e2e`.
 - Install Playwright browser binaries on each machine with `pnpm exec playwright install`.
+
+## License
+
+MIT. See `LICENSE`.
