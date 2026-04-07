@@ -74,6 +74,49 @@ prefix_rule(
 )
 
 prefix_rule(
+    pattern = ["git", "status"],
+    decision = "allow",
+    justification = "Allow inspecting the current repository status without prompting.",
+    match = [
+        "git status",
+        "git status --short",
+        "git status --short --branch",
+    ],
+    not_match = [
+        "git diff",
+        "git add .",
+    ],
+)
+
+prefix_rule(
+    pattern = ["git", "diff"],
+    decision = "allow",
+    justification = "Allow inspecting working tree and index diffs without prompting.",
+    match = [
+        "git diff",
+        "git diff --stat",
+        "git diff --cached",
+    ],
+    not_match = [
+        "git status",
+        "git add .",
+    ],
+)
+
+prefix_rule(
+    pattern = ["git", "branch", "--show-current"],
+    decision = "allow",
+    justification = "Allow reading the current branch name without prompting.",
+    match = [
+        "git branch --show-current",
+    ],
+    not_match = [
+        "git branch -d feature/example",
+        "git checkout main",
+    ],
+)
+
+prefix_rule(
     pattern = ["git", "rebase", ["main", "origin/main", "develop", "origin/develop", "master", "origin/master"]],
     decision = "allow",
     justification = "Allow rebasing the current branch onto a common integration branch without prompting.",
