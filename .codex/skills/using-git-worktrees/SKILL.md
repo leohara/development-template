@@ -1,6 +1,6 @@
 ---
 name: using-git-worktrees
-description: Create a task-specific git worktree under `.worktrees/` at the repository root before making code changes. Treat the primary workspace as investigation-only, and create each new worktree from the default base branch using `<type>/<short-kebab-slug>`.
+description: Create a task-specific git worktree under `.worktrees/` at the repository root before making code changes. Treat the primary workspace as investigation-only, create each new worktree from the default base branch using `<type>/<short-kebab-slug>`, and hand off final verification to `code-change-verification`.
 ---
 
 # Using Git Worktrees
@@ -8,6 +8,7 @@ description: Create a task-specific git worktree under `.worktrees/` at the repo
 ## When To Apply
 
 - Use this when you may touch files under Git control, such as implementation, refactoring, configuration changes, documentation updates, or edits under `.codex/`
+- Use this before `code-change-verification` when the task should run in its own isolated checkout
 - If you are already in the correct task worktree, continue there
 
 ## Required Rules
@@ -19,7 +20,15 @@ description: Create a task-specific git worktree under `.worktrees/` at the repo
 5. Create worktrees under `.worktrees/` at the repository root.
 6. If `.worktrees/` is not ignored, update `.gitignore` before continuing.
 7. If the repository has a wrapper command for worktree creation, use it first. Otherwise use this skill's `scripts/worktree-add.sh`.
-8. If worktree creation, removal, or branch operations fail because of permissions, request escalation immediately and continue the process.
+8. If this repository also uses `code-change-verification`, treat this skill as the setup phase and `code-change-verification` as the final verification gate for runtime, test, build, or UI-related changes.
+9. Baseline verification in this skill only proves the new worktree is usable. It does not replace the final verification pass after implementation.
+10. If worktree creation, removal, or branch operations fail because of permissions, request escalation immediately and continue the process.
+
+## Relationship To code-change-verification
+
+- This skill prepares the isolated checkout that downstream work should use.
+- The expected handoff to `code-change-verification` is: worktree path, base branch, setup status, baseline verification results, and any environment blockers discovered during setup.
+- After code changes exist in the task worktree, run `code-change-verification` there instead of returning to the primary workspace.
 
 ## Steps
 
@@ -69,13 +78,14 @@ cd ".worktrees/$WORKTREE_NAME"
 - Examples: `pnpm install`, `npm install`, `bun install`, `cargo fetch`
 - If it fails because of network restrictions, request escalation and rerun it
 
-### 6. baseline verification
+### 6. Baseline Verification
 
 - Run one or more standard non-mutating checks for that repository
 - Examples: `pnpm lint`, `pnpm test`, `pnpm typecheck`, `cargo test`, `go test ./...`
 - Do not use mutating or long-running commands such as `format`, `db:migrate`, `seed`, or `dev` as baseline checks
 - If a check fails because required environment variables or credentials are missing, state exactly which prerequisite is missing and decide whether to continue
 - If you cannot find any executable baseline check, report that fact before proceeding
+- If the task will continue into runtime, test, build, or UI changes, plan to rerun the final verification stack later with `code-change-verification` from this worktree
 
 ### 7. Report That The Setup Is Ready
 
@@ -83,8 +93,15 @@ cd ".worktrees/$WORKTREE_NAME"
 Worktree ready at <full-path>
 Based on <base-branch>: <commit>
 Verification: <commands or skipped with reason>
+Final verification: run `code-change-verification` from this worktree before claiming completion
 Ready to implement <task>
 ```
+
+### 8. Hand Off To code-change-verification
+
+- Keep implementation and final verification inside the same task worktree whenever possible.
+- Use the baseline verification output from this skill only as setup evidence.
+- Once the diff exists, invoke `code-change-verification` from the task worktree and report fresh results from that pass.
 
 ## If You Used The Wrong Base Branch
 
@@ -106,3 +123,4 @@ sh "$SKILL_SCRIPT" --base "$BASE_BRANCH" "$BRANCH_NAME"
 - Edit directly in the primary workspace
 - Skip checking whether `.worktrees/` is ignored
 - Silently ignore a baseline failure
+- Treat baseline verification as a replacement for `code-change-verification`

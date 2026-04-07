@@ -1,6 +1,6 @@
 ---
 name: create-pr
-description: A skill for driving GitHub pull request creation. Handles change review, required checks, commit, push, and PR creation in one flow. Trigger on requests such as "create a PR" or "make a pull request".
+description: A skill for driving GitHub pull request creation. Handles change review, required checks, commit, push, and PR creation in one flow, and expects fresh verification evidence from `code-change-verification` when repository code changed.
 allowed-tools:
   - Bash
   - Read
@@ -12,6 +12,14 @@ user-invocable: true
 # Create PR
 
 Handle the full sequence needed to create a GitHub pull request, from reviewing changes through creating the PR.
+
+When the repository uses `code-change-verification`, treat that skill as the upstream verification gate for runtime, test, build, or UI-related changes.
+
+## Relationship To code-change-verification
+
+- Use `code-change-verification` before this skill when repository code, tests, build behavior, or visible UI changed.
+- The expected input from that skill is: commands run, pass/fail outcomes, skipped checks with reasons, environment blockers, and manual verification evidence.
+- Do not create a PR based on stale or assumed verification state.
 
 ## Workflow
 
@@ -31,8 +39,10 @@ If the change set is too broad, includes unintended diffs, or has unresolved con
 Before committing, determine and run the checks required by this repository. Typical examples are format, lint, typecheck, and test.
 
 - If there are project-specific steps, follow those first
+- If this repository uses `code-change-verification`, prefer that skill's final pass and reuse its fresh verification summary here instead of inventing a new checklist ad hoc
 - If any check fails, fix it before moving on
 - Tell the user what you ran and what the outcome was
+- If required verification has not been run yet for a code change, stop and run `code-change-verification` before committing or opening the PR
 
 ### 3. Stage and commit intentionally
 
@@ -91,7 +101,7 @@ If there is no template, the body should include at least the following.
 
 - What changed
 - Why it changed
-- How it was verified
+- How it was verified, using the fresh summary from `code-change-verification` when applicable
 - Any extra context reviewers should pay attention to
 
 ## Important notes
@@ -102,6 +112,7 @@ If there is no template, the body should include at least the following.
 4. Do not choose the base branch from a fixed value; follow user instruction or repository workflow
 5. Prefer `--body-file` when passing the PR body
 6. If something is unclear, ask the user and include the reasoning
+7. When code changed, do not proceed on stale verification. Reuse the latest `code-change-verification` output or rerun it
 
 ## Error handling
 
@@ -109,3 +120,4 @@ If there is no template, the body should include at least the following.
 - Use a sufficient timeout for long-running checks
 - Use a body file so content containing characters such as `[]` does not break
 - Before pushing or creating the PR, confirm that no unresolved problems remain
+- If verification evidence is missing for a code change, the next step is to run `code-change-verification`, not to continue with the PR

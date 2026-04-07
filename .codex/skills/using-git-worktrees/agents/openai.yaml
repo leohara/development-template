@@ -1,0 +1,4 @@
+interface:
+  display_name: "Using Git Worktrees"
+  short_description: "Create an isolated task worktree"
+  default_prompt: "Use $using-git-worktrees to create a dedicated task worktree before editing, then finish the task there and run $code-change-verification before claiming completion."

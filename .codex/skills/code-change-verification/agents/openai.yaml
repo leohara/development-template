@@ -1,4 +1,4 @@
 interface:
   display_name: "Code Change Verification"
-  short_description: "Verify repository code changes"
-  default_prompt: "Use $code-change-verification to run this repository's verification stack. By default, run pnpm run lint, pnpm run type-check, pnpm run test, and pnpm run build, then report any failures or environment blockers."
+  short_description: "Verify code changes in the task worktree"
+  default_prompt: "Use $code-change-verification in the task worktree that contains the diff. If the task has not been isolated yet, use $using-git-worktrees first, then hand the fresh verification summary to $create-pr."
