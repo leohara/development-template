@@ -663,6 +663,20 @@ prefix_rule(
 )
 
 prefix_rule(
+    pattern = ["pnpm", "run", "verify:code-change"],
+    decision = "allow",
+    justification = "Allow running the repository's code-change verification wrapper without prompting.",
+    match = [
+        "pnpm run verify:code-change",
+        "pnpm run verify:code-change -- --help",
+    ],
+    not_match = [
+        "pnpm run build",
+        "pnpm run db:migrate",
+    ],
+)
+
+prefix_rule(
     pattern = ["pnpm", "exec", ["next", "electron", "tsc", "eslint", "vitest"]],
     decision = "allow",
     justification = "Allow invoking common React, Next.js, Electron, and TypeScript CLIs through pnpm without prompting.",

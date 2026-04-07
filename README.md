@@ -2,6 +2,7 @@
 
 ## Tooling
 
+- `pnpm run build`: run the template build check (`type-check` in this repository)
 - `pnpm run lint`: run `oxlint`
 - `pnpm run lint:fix`: run `oxlint --fix`
 - `pnpm run fmt`: run `oxfmt`
@@ -11,6 +12,7 @@
 - `pnpm run test:unit:watch`: run `Vitest` in watch mode
 - `pnpm run test:e2e`: run end-to-end tests with `Playwright`
 - `pnpm run test:e2e:headed`: run `Playwright` in headed mode
+- `pnpm run verify:code-change`: run the Codex `code-change-verification` wrapper (`lint`, `type-check`, `test`, `build`)
 
 ## Commits
 

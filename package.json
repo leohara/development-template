@@ -4,6 +4,7 @@
   "private": true,
   "license": "MIT",
   "scripts": {
+    "build": "pnpm run type-check",
     "lint": "oxlint",
     "lint:fix": "oxlint --fix",
     "fmt": "oxfmt",
@@ -14,7 +15,8 @@
     "test:unit": "vitest run",
     "test:unit:watch": "vitest",
     "test:e2e": "playwright test --pass-with-no-tests",
-    "test:e2e:headed": "playwright test --headed --pass-with-no-tests"
+    "test:e2e:headed": "playwright test --headed --pass-with-no-tests",
+    "verify:code-change": "node .codex/skills/code-change-verification/scripts/run.mjs"
   },
   "devDependencies": {
     "@commitlint/cli": "^20.5.0",
