@@ -44,7 +44,8 @@ git status --short
 ### 2. Check That `.worktrees/` Exists And Is Ignored
 
 ```bash
-ls -d .worktrees 2>/dev/null || mkdir -p .worktrees
+# Run this from the repository root
+mkdir -p .worktrees
 git check-ignore -v .worktrees
 ```
 
@@ -62,12 +63,11 @@ BASE_BRANCH=main
 BRANCH_NAME=feature/example-task
 WORKTREE_NAME="${BRANCH_NAME//\//-}"
 
-SKILL_SCRIPT="$(git rev-parse --show-toplevel)/.codex/skills/using-git-worktrees/scripts/worktree-add.sh"
-
 # Prefer the repository's wrapper command if one exists
 # Example: pnpm worktree:add -- --base "$BASE_BRANCH" "$BRANCH_NAME"
 
-sh "$SKILL_SCRIPT" --base "$BASE_BRANCH" "$BRANCH_NAME"
+# Run this from the repository root
+sh .codex/skills/using-git-worktrees/scripts/worktree-add.sh --base "$BASE_BRANCH" "$BRANCH_NAME"
 
 cd ".worktrees/$WORKTREE_NAME"
 ```
@@ -105,16 +105,22 @@ Ready to implement <task>
 
 ## If You Used The Wrong Base Branch
 
-Confirm that the worktree is clean, then remove it and recreate it from the correct base branch.
+Confirm that the worktree is clean, then remove it and recreate it from the correct base branch with a fresh branch name. If you need to reuse the old branch name, handle that branch cleanup separately and explicitly.
+
+For Codex command execution, do not use `git -C ...`. Set `workdir` to the target worktree and run plain `git` commands so the repository rules apply cleanly.
 
 ```bash
 BASE_BRANCH=main
-SKILL_SCRIPT="$(git rev-parse --show-toplevel)/.codex/skills/using-git-worktrees/scripts/worktree-add.sh"
+OLD_BRANCH_NAME=feature/example-task
+OLD_WORKTREE_NAME="${OLD_BRANCH_NAME//\//-}"
+NEW_BRANCH_NAME=feature/example-task-v2
 
-git -C ".worktrees/$WORKTREE_NAME" status --short
-git worktree remove ".worktrees/$WORKTREE_NAME"
-git branch -D "$BRANCH_NAME"
-sh "$SKILL_SCRIPT" --base "$BASE_BRANCH" "$BRANCH_NAME"
+# Run this with workdir set to ".worktrees/$OLD_WORKTREE_NAME"
+git status --short
+git worktree remove ".worktrees/$OLD_WORKTREE_NAME"
+
+# Run this from the repository root
+sh .codex/skills/using-git-worktrees/scripts/worktree-add.sh --base "$BASE_BRANCH" "$NEW_BRANCH_NAME"
 ```
 
 ## What Not To Do
