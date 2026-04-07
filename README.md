@@ -6,6 +6,7 @@
 - `pnpm run lint:fix`: run `oxlint --fix`
 - `pnpm run fmt`: run `oxfmt`
 - `pnpm run fmt:check`: run `oxfmt --check`
+- `pnpm run type-check`: run `tsc` without emitting files
 - `pnpm run test`: run unit tests with `Vitest`
 - `pnpm run test:unit:watch`: run `Vitest` in watch mode
 - `pnpm run test:e2e`: run end-to-end tests with `Playwright`
