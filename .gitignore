@@ -3,4 +3,5 @@ playwright-report/
 test-results/
 coverage/
 .worktree/
+.husky/_/
 .worktrees/
