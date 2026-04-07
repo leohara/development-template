@@ -1,0 +1,681 @@
+# Project-scoped Codex execpolicy rules for a React app template.
+#
+# Template notes:
+# - Designed for React repositories that may include Next.js and/or Electron.
+# - Protect direct pushes to main/master/develop; use feature branches and PRs.
+# - Example paths use common app/, src/, and electron/ layouts and are illustrative.
+# - Worktree rules support both plain git and the safe `-c` wrappers Codex often emits.
+#
+# Validate this file with:
+# codex execpolicy check --pretty \
+#   --rules .codex/rules/custom.rules \
+#   -- git push origin feature/example
+
+prefix_rule(
+    pattern = ["git", "add"],
+    decision = "allow",
+    justification = "Allow staging changes in this repository without prompting.",
+    match = [
+        "git add .",
+        "git add -A",
+        "git add app/page.tsx",
+        "git add src/components/Button.tsx",
+    ],
+    not_match = [
+        "git commit -m chore",
+        "git reset --hard",
+    ],
+)
+
+prefix_rule(
+    pattern = ["git", "rm"],
+    decision = "prompt",
+    justification = "Confirm before removing tracked files from the repository with `git rm`.",
+    match = [
+        "git rm app/page.tsx",
+        "git rm -r src/components",
+        "git rm --cached pnpm-lock.yaml",
+    ],
+    not_match = [
+        "rm app/page.tsx",
+        "git add app/page.tsx",
+    ],
+)
+
+prefix_rule(
+    pattern = ["git", "commit"],
+    decision = "allow",
+    justification = "Allow local commits in this repository without prompting.",
+    match = [
+        "git commit -m chore",
+        "git commit --amend --no-edit",
+        "git commit",
+    ],
+    not_match = [
+        "git add .",
+        "git push origin main",
+    ],
+)
+
+prefix_rule(
+    pattern = ["git", "merge"],
+    decision = "allow",
+    justification = "Allow local branch merges in this repository without prompting.",
+    match = [
+        "git merge main",
+        "git merge develop",
+        "git merge origin/main",
+        "git merge --abort",
+    ],
+    not_match = [
+        "git rebase main",
+        "git cherry-pick abc123",
+    ],
+)
+
+prefix_rule(
+    pattern = ["git", "rebase", ["main", "origin/main", "develop", "origin/develop", "master", "origin/master"]],
+    decision = "allow",
+    justification = "Allow rebasing the current branch onto a common integration branch without prompting.",
+    match = [
+        "git rebase main",
+        "git rebase origin/main",
+        "git rebase develop",
+        "git rebase origin/develop",
+        "git rebase master",
+        "git rebase origin/master",
+    ],
+    not_match = [
+        "git rebase --continue",
+        "git merge main",
+    ],
+)
+
+prefix_rule(
+    pattern = ["git", "rebase", ["--continue", "--abort", "--quit", "--skip"]],
+    decision = "allow",
+    justification = "Allow managing an in-progress rebase without prompting.",
+    match = [
+        "git rebase --continue",
+        "git rebase --abort",
+        "git rebase --quit",
+        "git rebase --skip",
+    ],
+    not_match = [
+        "git rebase main",
+        "git merge --abort",
+    ],
+)
+
+prefix_rule(
+    pattern = ["git", "rebase", ["-i", "--interactive", "-x", "--exec", "--onto"]],
+    decision = "forbidden",
+    justification = "Do not start interactive, exec, or onto rebases automatically.",
+    match = [
+        "git rebase -i main",
+        "git rebase --interactive origin/develop",
+        "git rebase -x pwd main",
+        "git rebase --exec pwd develop",
+        "git rebase --onto main HEAD~3",
+    ],
+    not_match = [
+        "git rebase main",
+        "git rebase --continue",
+    ],
+)
+
+prefix_rule(
+    pattern = ["git", "fetch"],
+    decision = "allow",
+    justification = "Allow fetching remote refs without prompting.",
+    match = [
+        "git fetch",
+        "git fetch origin",
+        "git fetch --all --prune",
+    ],
+    not_match = [
+        "git pull origin main",
+        "git push origin main",
+    ],
+)
+
+prefix_rule(
+    pattern = ["git", "checkout", ["--ours", "--theirs"]],
+    decision = "allow",
+    justification = "Allow resolving conflicted paths by choosing the ours or theirs side during conflict cleanup when explicitly requested.",
+    match = [
+        "git checkout --ours -- app/page.tsx",
+        "git checkout --theirs -- src/components/Button.tsx",
+        "git checkout --ours electron/main.ts",
+    ],
+    not_match = [
+        "git checkout main",
+        "git checkout -b fix/conflict-resolution",
+        "git restore --source=HEAD -- app/page.tsx",
+    ],
+)
+
+prefix_rule(
+    pattern = ["git", "-C"],
+    decision = "forbidden",
+    justification = "Do not run git through `git -C ...` automatically. Set `workdir` to the target worktree and use plain git commands so the repository rules match safely.",
+    match = [
+        "git -C /tmp/project/.worktrees/feature-search add .",
+        "git -C /tmp/project/.worktrees/feature-search fetch origin",
+        "git -C /tmp/project/.worktrees/feature-search push origin feature/search",
+    ],
+    not_match = [
+        "git add .",
+        "git fetch origin",
+        "git -c core.quotePath=false worktree list",
+    ],
+)
+
+# Worktree helpers may wrap git with safe `-c` flags. Rules match exact argv
+# prefixes, so the supported wrappers are listed explicitly.
+prefix_rule(
+    pattern = ["git", "-c", ["core.quotePath=false", "color.ui=false"], "worktree", "list"],
+    decision = "allow",
+    justification = "Allow listing worktrees when git is wrapped with a safe config override.",
+    match = [
+        "git -c core.quotePath=false worktree list",
+        "git -c color.ui=false worktree list --porcelain",
+    ],
+    not_match = [
+        "git worktree list",
+        "git -c core.quotePath=false worktree add .worktrees/test -b test main",
+    ],
+)
+
+prefix_rule(
+    pattern = ["git", "-c", "core.quotePath=false", "-c", "color.ui=false", "worktree", "list"],
+    decision = "allow",
+    justification = "Allow listing worktrees when git is wrapped with the common quotePath and color overrides.",
+    match = [
+        "git -c core.quotePath=false -c color.ui=false worktree list",
+        "git -c core.quotePath=false -c color.ui=false worktree list --porcelain",
+    ],
+    not_match = [
+        "git -c color.ui=false -c core.quotePath=false worktree list",
+    ],
+)
+
+prefix_rule(
+    pattern = ["git", "-c", "color.ui=false", "-c", "core.quotePath=false", "worktree", "list"],
+    decision = "allow",
+    justification = "Allow listing worktrees when git is wrapped with the common color and quotePath overrides.",
+    match = [
+        "git -c color.ui=false -c core.quotePath=false worktree list",
+        "git -c color.ui=false -c core.quotePath=false worktree list --porcelain",
+    ],
+    not_match = [
+        "git -c core.quotePath=false -c color.ui=false worktree list",
+    ],
+)
+
+prefix_rule(
+    pattern = ["git", "-c", ["core.quotePath=false", "color.ui=false"], "worktree", "add"],
+    decision = "allow",
+    justification = "Allow creating task worktrees when git is wrapped with a safe config override.",
+    match = [
+        "git -c core.quotePath=false worktree add .worktrees/test -b test main",
+        "git -c color.ui=false worktree add --detach .worktrees/tmp",
+    ],
+    not_match = [
+        "git worktree add .worktrees/test -b test main",
+        "git -c core.quotePath=false worktree remove .worktrees/test",
+    ],
+)
+
+prefix_rule(
+    pattern = ["git", "-c", "core.quotePath=false", "-c", "color.ui=false", "worktree", "add"],
+    decision = "allow",
+    justification = "Allow creating task worktrees when git is wrapped with the common quotePath and color overrides.",
+    match = [
+        "git -c core.quotePath=false -c color.ui=false worktree add .worktrees/test -b test main",
+        "git -c core.quotePath=false -c color.ui=false worktree add --detach .worktrees/tmp",
+    ],
+    not_match = [
+        "git -c color.ui=false -c core.quotePath=false worktree add .worktrees/test -b test main",
+    ],
+)
+
+prefix_rule(
+    pattern = ["git", "-c", "color.ui=false", "-c", "core.quotePath=false", "worktree", "add"],
+    decision = "allow",
+    justification = "Allow creating task worktrees when git is wrapped with the common color and quotePath overrides.",
+    match = [
+        "git -c color.ui=false -c core.quotePath=false worktree add .worktrees/test -b test main",
+        "git -c color.ui=false -c core.quotePath=false worktree add --detach .worktrees/tmp",
+    ],
+    not_match = [
+        "git -c core.quotePath=false -c color.ui=false worktree add .worktrees/test -b test main",
+    ],
+)
+
+prefix_rule(
+    pattern = ["git", "-c", ["core.quotePath=false", "color.ui=false"], "worktree", "remove"],
+    decision = "allow",
+    justification = "Allow deleting clean worktrees when git is wrapped with a safe config override.",
+    match = [
+        "git -c core.quotePath=false worktree remove .worktrees/test",
+        "git -c color.ui=false worktree remove /tmp/project-worktree",
+    ],
+    not_match = [
+        "git -c core.quotePath=false worktree add .worktrees/test -b test main",
+    ],
+)
+
+prefix_rule(
+    pattern = ["git", "-c", "core.quotePath=false", "-c", "color.ui=false", "worktree", "remove"],
+    decision = "allow",
+    justification = "Allow deleting clean worktrees when git is wrapped with the common quotePath and color overrides.",
+    match = [
+        "git -c core.quotePath=false -c color.ui=false worktree remove .worktrees/test",
+        "git -c core.quotePath=false -c color.ui=false worktree remove /tmp/project-worktree",
+    ],
+    not_match = [
+        "git -c color.ui=false -c core.quotePath=false worktree remove .worktrees/test",
+        "git -c core.quotePath=false -c color.ui=false worktree add .worktrees/test -b test main",
+    ],
+)
+
+prefix_rule(
+    pattern = ["git", "-c", "color.ui=false", "-c", "core.quotePath=false", "worktree", "remove"],
+    decision = "allow",
+    justification = "Allow deleting clean worktrees when git is wrapped with the common color and quotePath overrides.",
+    match = [
+        "git -c color.ui=false -c core.quotePath=false worktree remove .worktrees/test",
+        "git -c color.ui=false -c core.quotePath=false worktree remove /tmp/project-worktree",
+    ],
+    not_match = [
+        "git -c core.quotePath=false -c color.ui=false worktree remove .worktrees/test",
+        "git -c color.ui=false -c core.quotePath=false worktree add .worktrees/test -b test main",
+    ],
+)
+
+prefix_rule(
+    pattern = ["git", "-c", ["core.quotePath=false", "color.ui=false"], "worktree", "remove", ["-f", "--force"]],
+    decision = "forbidden",
+    justification = "Do not force-delete worktrees automatically, even when git is wrapped with a safe config override.",
+    match = [
+        "git -c core.quotePath=false worktree remove --force .worktrees/test",
+        "git -c color.ui=false worktree remove -f .worktrees/test",
+    ],
+    not_match = [
+        "git -c core.quotePath=false worktree remove .worktrees/test",
+        "git -c color.ui=false worktree remove /tmp/project-worktree",
+    ],
+)
+
+prefix_rule(
+    pattern = ["git", "-c", "core.quotePath=false", "-c", "color.ui=false", "worktree", "remove", ["-f", "--force"]],
+    decision = "forbidden",
+    justification = "Do not force-delete worktrees automatically when git is wrapped with the common quotePath and color overrides.",
+    match = [
+        "git -c core.quotePath=false -c color.ui=false worktree remove --force .worktrees/test",
+        "git -c core.quotePath=false -c color.ui=false worktree remove -f .worktrees/test",
+    ],
+    not_match = [
+        "git -c core.quotePath=false -c color.ui=false worktree remove .worktrees/test",
+    ],
+)
+
+prefix_rule(
+    pattern = ["git", "-c", "color.ui=false", "-c", "core.quotePath=false", "worktree", "remove", ["-f", "--force"]],
+    decision = "forbidden",
+    justification = "Do not force-delete worktrees automatically when git is wrapped with the common color and quotePath overrides.",
+    match = [
+        "git -c color.ui=false -c core.quotePath=false worktree remove --force .worktrees/test",
+        "git -c color.ui=false -c core.quotePath=false worktree remove -f .worktrees/test",
+    ],
+    not_match = [
+        "git -c color.ui=false -c core.quotePath=false worktree remove .worktrees/test",
+    ],
+)
+
+prefix_rule(
+    pattern = ["git", "worktree", "list"],
+    decision = "allow",
+    justification = "Allow listing worktrees without prompting.",
+    match = [
+        "git worktree list",
+        "git worktree list --porcelain",
+    ],
+    not_match = [
+        "git worktree add .worktrees/test -b test main",
+    ],
+)
+
+prefix_rule(
+    pattern = ["git", "worktree", "add"],
+    decision = "allow",
+    justification = "Allow creating task worktrees without prompting.",
+    match = [
+        "git worktree add .worktrees/test -b test main",
+        "git worktree add --detach .worktrees/tmp",
+    ],
+    not_match = [
+        "git worktree list",
+        "git worktree remove .worktrees/test",
+    ],
+)
+
+prefix_rule(
+    pattern = ["git", "worktree", "remove"],
+    decision = "allow",
+    justification = "Allow deleting clean worktrees without prompting.",
+    match = [
+        "git worktree remove .worktrees/test",
+        "git worktree remove /tmp/project-worktree",
+    ],
+    not_match = [
+        "git worktree add .worktrees/test -b test main",
+        "git worktree list",
+    ],
+)
+
+prefix_rule(
+    pattern = ["git", "worktree", "remove", ["-f", "--force"]],
+    decision = "forbidden",
+    justification = "Do not force-delete worktrees automatically.",
+    match = [
+        "git worktree remove --force .worktrees/test",
+        "git worktree remove -f .worktrees/test",
+    ],
+    not_match = [
+        "git worktree remove .worktrees/test",
+        "git worktree remove /tmp/project-worktree",
+    ],
+)
+
+prefix_rule(
+    pattern = ["git", "worktree", "prune"],
+    decision = "allow",
+    justification = "Allow pruning stale worktree metadata without prompting.",
+    match = [
+        "git worktree prune",
+    ],
+    not_match = [
+        "git worktree remove .worktrees/test",
+        "git worktree list",
+    ],
+)
+
+prefix_rule(
+    pattern = ["git", "push", "origin"],
+    decision = "prompt",
+    justification = "Keep branchless or otherwise ambiguous `git push origin` commands manual. Explicit upstream-setting pushes used by the worktree-to-push-to-PR flow are allowed below, while protected destinations remain forbidden.",
+    match = [
+        "git push origin",
+        "git push origin codex-rules",
+        "git push origin feature/ui-refresh",
+        "git push origin fix/startup-crash",
+    ],
+    not_match = [
+        "git push -u origin codex-rules",
+        "gh pr create --draft",
+    ],
+)
+
+prefix_rule(
+    pattern = ["git", "push", "-u", "origin"],
+    decision = "allow",
+    justification = "Allow setting upstream on origin for task branches so the worktree-to-push-to-PR flow can proceed without prompts. Protected destinations remain forbidden by the more specific rules below.",
+    match = [
+        "git push -u origin codex-rules",
+        "git push -u origin feature/ui-refresh",
+    ],
+    not_match = [
+        "git push origin codex-rules",
+        "git commit -m chore",
+    ],
+)
+
+prefix_rule(
+    pattern = ["git", "push", "--set-upstream", "origin"],
+    decision = "allow",
+    justification = "Allow setting upstream on origin for task branches so the worktree-to-push-to-PR flow can proceed without prompts. Protected destinations remain forbidden by the more specific rules below.",
+    match = [
+        "git push --set-upstream origin codex-rules",
+        "git push --set-upstream origin feature/ui-refresh",
+    ],
+    not_match = [
+        "git push origin codex-rules",
+        "git commit -m chore",
+    ],
+)
+
+prefix_rule(
+    pattern = ["git", "push", "origin", ["develop", "main", "master", "refs/heads/develop", "refs/heads/main", "refs/heads/master", ":develop", ":main", ":master", "HEAD:develop", "HEAD:main", "HEAD:master", "HEAD:refs/heads/develop", "HEAD:refs/heads/main", "HEAD:refs/heads/master"]],
+    decision = "forbidden",
+    justification = "Push feature or fix branches and open a PR instead of pushing directly to protected branches.",
+    match = [
+        "git push origin develop",
+        "git push origin main",
+        "git push origin master",
+        "git push origin refs/heads/develop",
+        "git push origin refs/heads/main",
+        "git push origin :develop",
+        "git push origin :main",
+        "git push origin HEAD:develop",
+        "git push origin HEAD:main",
+        "git push origin HEAD:refs/heads/develop",
+        "git push origin HEAD:refs/heads/main",
+    ],
+)
+
+prefix_rule(
+    pattern = ["git", "push", "-u", "origin", ["develop", "main", "master", "refs/heads/develop", "refs/heads/main", "refs/heads/master", ":develop", ":main", ":master", "HEAD:develop", "HEAD:main", "HEAD:master", "HEAD:refs/heads/develop", "HEAD:refs/heads/main", "HEAD:refs/heads/master"]],
+    decision = "forbidden",
+    justification = "Push feature or fix branches and open a PR instead of pushing directly to protected branches.",
+    match = [
+        "git push -u origin develop",
+        "git push -u origin main",
+        "git push -u origin master",
+        "git push -u origin refs/heads/develop",
+        "git push -u origin refs/heads/main",
+        "git push -u origin :develop",
+        "git push -u origin :main",
+        "git push -u origin HEAD:develop",
+        "git push -u origin HEAD:main",
+        "git push -u origin HEAD:refs/heads/develop",
+        "git push -u origin HEAD:refs/heads/main",
+    ],
+)
+
+prefix_rule(
+    pattern = ["git", "push", "--set-upstream", "origin", ["develop", "main", "master", "refs/heads/develop", "refs/heads/main", "refs/heads/master", ":develop", ":main", ":master", "HEAD:develop", "HEAD:main", "HEAD:master", "HEAD:refs/heads/develop", "HEAD:refs/heads/main", "HEAD:refs/heads/master"]],
+    decision = "forbidden",
+    justification = "Push feature or fix branches and open a PR instead of pushing directly to protected branches.",
+    match = [
+        "git push --set-upstream origin develop",
+        "git push --set-upstream origin main",
+        "git push --set-upstream origin master",
+        "git push --set-upstream origin refs/heads/develop",
+        "git push --set-upstream origin refs/heads/main",
+        "git push --set-upstream origin :develop",
+        "git push --set-upstream origin :main",
+        "git push --set-upstream origin HEAD:develop",
+        "git push --set-upstream origin HEAD:main",
+        "git push --set-upstream origin HEAD:refs/heads/develop",
+        "git push --set-upstream origin HEAD:refs/heads/main",
+    ],
+)
+
+prefix_rule(
+    pattern = ["git", "push", ["-f", "--force", "--force-with-lease"]],
+    decision = "forbidden",
+    justification = "Do not force-push automatically.",
+    match = [
+        "git push -f origin codex-rules",
+        "git push --force origin feature/ui-refresh",
+        "git push --force-with-lease origin fix/startup-crash",
+    ],
+)
+
+prefix_rule(
+    pattern = ["git", "push", "origin", ["-f", "--force", "--force-with-lease"]],
+    decision = "forbidden",
+    justification = "Do not force-push automatically.",
+    match = [
+        "git push origin --force codex-rules",
+        "git push origin --force-with-lease feature/ui-refresh",
+    ],
+)
+
+prefix_rule(
+    pattern = ["git", "push", "-u", "origin", ["-f", "--force", "--force-with-lease"]],
+    decision = "forbidden",
+    justification = "Do not force-push automatically.",
+    match = [
+        "git push -u origin --force codex-rules",
+        "git push -u origin --force-with-lease feature/ui-refresh",
+    ],
+)
+
+prefix_rule(
+    pattern = ["git", "push", "--set-upstream", "origin", ["-f", "--force", "--force-with-lease"]],
+    decision = "forbidden",
+    justification = "Do not force-push automatically.",
+    match = [
+        "git push --set-upstream origin --force codex-rules",
+        "git push --set-upstream origin --force-with-lease feature/ui-refresh",
+    ],
+)
+
+prefix_rule(
+    pattern = ["gh", "auth", "status"],
+    decision = "allow",
+    justification = "Allow checking GitHub CLI authentication status without prompting.",
+    match = [
+        "gh auth status",
+    ],
+    not_match = [
+        "gh auth login",
+    ],
+)
+
+prefix_rule(
+    pattern = ["gh", "repo", "view"],
+    decision = "allow",
+    justification = "Allow reading GitHub repository metadata without prompting.",
+    match = [
+        "gh repo view",
+        "gh repo view --json nameWithOwner,defaultBranchRef",
+    ],
+    not_match = [
+        "gh pr create --draft",
+    ],
+)
+
+prefix_rule(
+    pattern = ["gh", "pr", "create"],
+    decision = "allow",
+    justification = "Allow creating pull requests without prompting.",
+    match = [
+        "gh pr create --draft --title test --body body --base main --head codex-rules",
+        "gh pr create --draft --title test --body-file /tmp/pr-body.md --base develop --head feature/ui-refresh",
+    ],
+    not_match = [
+        "gh pr view 1",
+    ],
+)
+
+prefix_rule(
+    pattern = ["gh", "pr", "edit"],
+    decision = "allow",
+    justification = "Allow editing pull request metadata without prompting.",
+    match = [
+        "gh pr edit 123 --title test",
+        "gh pr edit 123 --body-file /tmp/pr-body.md",
+        "gh pr edit 123 --add-label chore",
+    ],
+    not_match = [
+        "gh pr create --draft",
+        "gh pr view 123",
+        "gh issue edit 123 --title test",
+    ],
+)
+
+prefix_rule(
+    pattern = ["gh", "pr", ["status", "view", "checks"]],
+    decision = "allow",
+    justification = "Allow reading pull request status, checks, and metadata without prompting.",
+    match = [
+        "gh pr status",
+        "gh pr view 1",
+        "gh pr view 1 --json url,title",
+        "gh pr checks 1",
+    ],
+    not_match = [
+        "gh pr create --draft",
+    ],
+)
+
+prefix_rule(
+    pattern = ["pnpm", "install"],
+    decision = "allow",
+    justification = "Allow installing JavaScript dependencies without prompting.",
+    match = [
+        "pnpm install",
+        "pnpm install --frozen-lockfile",
+    ],
+    not_match = [
+        "pnpm test",
+        "pnpm add react",
+    ],
+)
+
+prefix_rule(
+    pattern = ["pnpm", ["dev", "start", "build", "lint", "test", "check", "typecheck"]],
+    decision = "allow",
+    justification = "Allow running common package scripts for React repositories without prompting.",
+    match = [
+        "pnpm dev",
+        "pnpm build",
+        "pnpm lint",
+        "pnpm test",
+        "pnpm typecheck",
+    ],
+    not_match = [
+        "pnpm install",
+        "pnpm add react",
+    ],
+)
+
+prefix_rule(
+    pattern = ["pnpm", "run", ["dev", "start", "build", "lint", "test", "check", "typecheck", "electron:dev", "electron:build", "desktop:dev", "desktop:build"]],
+    decision = "allow",
+    justification = "Allow running common React, Next.js, and Electron package scripts without prompting.",
+    match = [
+        "pnpm run dev",
+        "pnpm run build",
+        "pnpm run lint",
+        "pnpm run typecheck",
+        "pnpm run electron:dev",
+        "pnpm run electron:build",
+    ],
+    not_match = [
+        "pnpm install",
+        "pnpm run db:migrate",
+    ],
+)
+
+prefix_rule(
+    pattern = ["pnpm", "exec", ["next", "electron", "tsc", "eslint", "vitest"]],
+    decision = "allow",
+    justification = "Allow invoking common React, Next.js, Electron, and TypeScript CLIs through pnpm without prompting.",
+    match = [
+        "pnpm exec next dev",
+        "pnpm exec next lint",
+        "pnpm exec electron .",
+        "pnpm exec tsc --noEmit",
+        "pnpm exec eslint .",
+        "pnpm exec vitest run",
+    ],
+    not_match = [
+        "pnpm exec prisma migrate dev",
+        "pnpm exec playwright install",
+    ],
+)
