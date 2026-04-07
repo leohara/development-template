@@ -1,7 +1,5 @@
 # Development Template
 
-Adapted in part from [`obra/superpowers`](https://github.com/obra/superpowers).
-
 ## Tooling
 
 - `pnpm run lint`: run `oxlint`
@@ -18,6 +16,14 @@ Adapted in part from [`obra/superpowers`](https://github.com/obra/superpowers).
 - `Vitest` is configured for unit tests in `tests/unit`.
 - `Playwright` is configured for end-to-end tests in `tests/e2e`.
 - Install Playwright browser binaries on each machine with `pnpm exec playwright install`.
+
+## Skills
+
+- `code-change-verification`: run the repository verification stack from the task worktree or checkout that contains the diff, then hand off fresh results to PR creation.
+- `codex-custom-rules`: create or update Codex execpolicy rules in `.codex/rules/custom.rules` and validate them with `codex execpolicy check`.
+- `create-pr`: review the current change scope, run required checks, commit intentionally, push the branch, and open a pull request.
+- `remove-unused-git-worktrees`: inventory registered worktrees and safely classify them for keep, remove, prune, or inspect.
+- `using-git-worktrees`: create a dedicated task worktree under `.worktrees/` before editing, then hand off final verification to `code-change-verification`.
 
 ## License
 
