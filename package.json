@@ -6,11 +6,18 @@
     "lint": "oxlint",
     "lint:fix": "oxlint --fix",
     "fmt": "oxfmt",
-    "fmt:check": "oxfmt --check"
+    "fmt:check": "oxfmt --check",
+    "test": "pnpm run test:unit",
+    "test:unit": "vitest run",
+    "test:unit:watch": "vitest",
+    "test:e2e": "playwright test --pass-with-no-tests",
+    "test:e2e:headed": "playwright test --headed --pass-with-no-tests"
   },
   "devDependencies": {
+    "@playwright/test": "^1.55.0",
     "oxfmt": "^0.44.0",
-    "oxlint": "^1.59.0"
+    "oxlint": "^1.59.0",
+    "vitest": "^3.2.4"
   },
   "packageManager": "pnpm@10.11.1"
 }
