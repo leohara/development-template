@@ -1,0 +1,4 @@
+interface:
+  display_name: "Codex Custom Rules"
+  short_description: "Create and validate Codex execpolicy rules"
+  default_prompt: "Use $codex-custom-rules to create or update .codex/rules/custom.rules for this repository and validate it with codex execpolicy check."
