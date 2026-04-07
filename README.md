@@ -11,6 +11,13 @@
 - `pnpm run test:e2e`: run end-to-end tests with `Playwright`
 - `pnpm run test:e2e:headed`: run `Playwright` in headed mode
 
+## Commits
+
+- `Husky` runs a `commit-msg` hook that enforces Conventional Commits via `commitlint`.
+- The hook is activated automatically when `pnpm install` runs the `prepare` script in a cloned or generated repository.
+- If dependencies were installed with `--ignore-scripts`, `HUSKY=0`, or a similar script-skipping setup, run `pnpm run prepare` once to enable the hook.
+- Use messages like `feat: add login form` or `chore(repo): enforce conventional commits`.
+
 ## Testing
 
 - `Vitest` is configured for unit tests in `tests/unit`.

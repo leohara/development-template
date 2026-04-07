@@ -8,6 +8,7 @@
     "lint:fix": "oxlint --fix",
     "fmt": "oxfmt",
     "fmt:check": "oxfmt --check",
+    "prepare": "husky",
     "test": "pnpm run test:unit",
     "test:unit": "vitest run",
     "test:unit:watch": "vitest",
@@ -15,7 +16,10 @@
     "test:e2e:headed": "playwright test --headed --pass-with-no-tests"
   },
   "devDependencies": {
+    "@commitlint/cli": "^20.5.0",
+    "@commitlint/config-conventional": "^20.5.0",
     "@playwright/test": "^1.55.0",
+    "husky": "^9.1.7",
     "oxfmt": "^0.44.0",
     "oxlint": "^1.59.0",
     "vitest": "^3.2.4"
