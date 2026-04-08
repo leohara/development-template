@@ -21,6 +21,13 @@ When the repository uses `code-change-verification`, treat that skill as the ups
 - The expected input from that skill is: commands run, pass/fail outcomes, skipped checks with reasons, environment blockers, and manual verification evidence.
 - Do not create a PR based on stale or assumed verification state.
 
+## Repository Defaults
+
+- Commit messages must be written in English unless the user explicitly asks for another language.
+- Pull request titles must be written in Japanese unless the user explicitly asks for another language.
+- Pull request bodies must follow `.github/pull_request_template.md` when that file exists.
+- When filling a template, replace placeholder guidance with concrete content and remove prompts that are no longer useful.
+
 ## Workflow
 
 ### 1. Confirm scope
@@ -59,6 +66,8 @@ Choose the commit message using this priority order.
 2. Existing repository convention
 3. Conventional Commits if there is no explicit convention
 
+Even when following repository convention or Conventional Commits, write the final commit message in English unless the user explicitly asks for another language.
+
 ### 4. Push the branch
 
 Check the current working branch name, then push that branch explicitly.
@@ -77,9 +86,11 @@ Before creating the PR, confirm the following.
 - Whether the user specified a base branch
 - Whether the repository has project-specific workflow rules
 - Otherwise, what the repository default branch is
-- If `.github/pull_request_template.md` exists, read it and reflect it in the body
+- If `.github/pull_request_template.md` exists, read it and follow it section by section in the body
 
 Do not hardcode the base branch. If the user did not specify one, use the repository default branch. Only ask when the default branch cannot be determined, and explain why.
+
+Unless the user explicitly requests otherwise, write the PR title in Japanese and keep it concise and descriptive.
 
 Do not embed a long PR body directly in CLI arguments; pass it through a temporary file.
 
@@ -96,6 +107,8 @@ Add `--draft` when needed. If there is no explicit instruction, decide whether d
 After creation, return the PR URL, and include the title, base branch, and check results if useful.
 
 ## PR body guidance
+
+If `.github/pull_request_template.md` exists, follow that template instead of inventing a new structure. Make sure the body includes the fresh verification summary from `code-change-verification` when applicable.
 
 If there is no template, the body should include at least the following.
 
