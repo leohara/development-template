@@ -1,4 +1,4 @@
 interface:
   display_name: "Create PR"
   short_description: "Commit, push, and open a pull request"
-  default_prompt: "Use $create-pr to prepare a pull request from the current branch. If code changed, run $code-change-verification first and include its fresh verification summary in the PR."
+  default_prompt: "Use $create-pr to prepare a pull request from the current branch. If code changed, run $code-change-verification first and include its fresh verification summary in the PR. Unless the user explicitly requests otherwise, commit messages must be in English, the PR title must be in Japanese, and the PR body must follow .github/pull_request_template.md."
