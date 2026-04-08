@@ -26,6 +26,18 @@
 - Build uses the first matching script: `build:ci`, `build`.
 - Missing scripts are skipped, so the template can be adopted incrementally.
 
+## GitHub Actions
+
+- `.github/workflows/ci.yml` runs on `push` and `pull_request`.
+- The workflow installs dependencies with `pnpm install --frozen-lockfile`.
+- Repository checks are dispatched by `.github/scripts/run-ci-checks.sh`.
+- Lint uses the first matching script: `lint:ci`, `lint`.
+- Format uses the first matching script: `fmt:check`, `format:check`, `prettier:check`, `check-format`.
+- Type checking uses the first matching script: `type-check`, `typecheck`, `check-types`, `type-check:ci`.
+- Tests use the first matching script: `test:ci`, `test`.
+- Build uses the first matching script: `build:ci`, `build`.
+- Missing scripts are skipped, so the template can be adopted incrementally.
+
 ## Commits
 
 - `Husky` runs a `commit-msg` hook that enforces Conventional Commits via `commitlint`.
